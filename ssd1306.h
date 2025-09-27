@@ -18,5 +18,6 @@
 // API
 void ssd1306_init(i2c_inst_t *i2c, uint8_t sda_pin, uint8_t scl_pin, uint8_t addr);
 void ssd1306_clear(void);
+void ssd1306_update(void);
 
 #endif

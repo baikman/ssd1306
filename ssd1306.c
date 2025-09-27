@@ -47,3 +47,22 @@ void ssd1306_init(i2c_inst_t *i2c, uint8_t sda_pin, uint8_t scl_pin, uint8_t add
     ssd1306_send_command(0x14); // Enable charge pump
     ssd1306_send_command(0xAF); // Turn display on (AE for sleep mode)
 }
+
+void ssd1306_clear(void) {
+    memset(buffer, 0, sizeof(buffer)); // Set buffer to all 0s
+    ssd1306_update();
+}
+
+void ssd1306_update(void) {
+    for (uint8_t page = 0; page < (SSD1306_HEIGHT / 8); page++) {
+        ssd1306_send_command(0xB0 + page); // Page start address
+        ssd1306_send_command(0x00); // Low column start address
+        ssd1306_send_command(0x10); // High column start address
+
+        uint8_t data[SSD1306_WIDTH + 1];
+        data[0] = 0x40;
+        memcpy(&data[1], &buffer[page * SSD1306_WIDTH], SSD1306_WIDTH);
+
+        i2c_write_blocking(ssd1306_i2c, ssd1306_address, data, SSD1306_WIDTH + 1, false);
+    }
+}
