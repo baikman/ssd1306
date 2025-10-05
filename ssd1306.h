@@ -19,5 +19,7 @@
 void ssd1306_init(i2c_inst_t *i2c, uint8_t sda_pin, uint8_t scl_pin, uint8_t addr);
 void ssd1306_clear(void);
 void ssd1306_update(void);
+void ssd1306_blink(uint16_t loops, uint16_t ms);
+void ssd1306_write_text(uint8_t textBuff[], uint8_t row, uint8_t column);
 
 #endif
