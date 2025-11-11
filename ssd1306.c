@@ -140,7 +140,7 @@ void ssd1306_init(i2c_inst_t *i2c, uint8_t sda_pin, uint8_t scl_pin, uint8_t add
     ssd1306_send_command(0xA1); // Set segment re-map (column address 0 is mapped to SEG0) (left-right)
     ssd1306_send_command(0xC8); // Set COM output scan direction to COM63-COM0 (top-bottom) ok i think its actually bottom-top but idk this is confusing,.
     ssd1306_send_command(0xDA); // Set COM pins hardware configuration
-    ssd1306_send_command(0x02); // Sequential COM pin configuration (not alternating)
+    ssd1306_send_command(0x12); // Sequential COM pin configuration (not alternating)
     ssd1306_send_command(0x81); // Initiate set contrast control for BANK0
     ssd1306_send_command(0x7F); // Set to mid-brightness
     ssd1306_send_command(0xA4); // Disable having entire display on
@@ -189,7 +189,7 @@ void ssd1306_write_text(uint8_t textBuff[], uint8_t row, uint8_t column) {
 
     if (y0 >= SSD1306_HEIGHT) return;
 
-    for (uint8_t i = 0; textBuff[i] != '\0'; ++i) {
+    for (size_t i = 0; textBuff[i] != '\0'; ++i) {
         uint8_t c = textBuff[i];
 
         if (x0 >= SSD1306_WIDTH) break;
