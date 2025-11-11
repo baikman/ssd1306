@@ -184,23 +184,27 @@ void ssd1306_blink(uint16_t loops, uint16_t ms) {
 void ssd1306_write_text(uint8_t textBuff[], uint8_t row, uint8_t column) {
     if (!textBuff) return;
 
-    uint8_t x0 = column * CHAR_PITCH;
-    uint8_t y0 = row * 8;
+    int x0 = column * CHAR_PITCH;
+    int y0 = row * 8;
 
     if (y0 >= SSD1306_HEIGHT) return;
 
     for (size_t i = 0; textBuff[i] != '\0'; ++i) {
         uint8_t c = textBuff[i];
 
-        if (x0 >= SSD1306_WIDTH) break;
+        if (x0 + FONT_W > SSD1306_WIDTH) {
+            x0 = 0;
+            y0 += FONT_H + 1;
+            if (y0 >= SSD1306_HEIGHT) break;
+        }
+
+        int page = y0 >> 3; // y0 / 8
+        int bit_offset = y0 & 0x7; // y0 % 8
 
         const uint8_t *glyph = font5x7[c - 0x20];
 
-        for (uint8_t col = 0; col < FONT_W; ++col) {
-            uint8_t px = x0 + col;
-            
-            uint8_t page = y0 >> 3;         // y0 / 8
-            uint8_t bit_offset = y0 & 0x07; // y0 % 8
+        for (int col = 0; col < FONT_W; ++col) {
+            int px = x0 + col;
 
             uint8_t col_bits = glyph[col] & 0x7F; // mask to last 7 bits
             uint8_t low = (col_bits << bit_offset);
@@ -210,27 +214,29 @@ void ssd1306_write_text(uint8_t textBuff[], uint8_t row, uint8_t column) {
             uint8_t low_mask = glyph_mask << bit_offset;
             uint8_t high_mask = (bit_offset == 0) ? 0 : glyph_mask >> (8 - bit_offset);
 
-            if (page >= 0 && page < (SSD1306_HEIGHT / 8)) {
-                uint8_t idx_low = page * SSD1306_WIDTH + px;
+            int pages = SSD1306_HEIGHT >> 3;
+
+            if (page >= 0 && page < pages) {
+                size_t idx_low = page * SSD1306_WIDTH + px;
                 buffer[idx_low] = (buffer[idx_low] & ~low_mask) | (low & low_mask);
             }
 
             if (bit_offset != 0) {
-                uint8_t next_page = page + 1;
+                int next_page = page + 1;
                 if (next_page >= 0 && next_page < (SSD1306_HEIGHT / 8)) {
-                    uint8_t idx_high = next_page * SSD1306_WIDTH + px;
+                    size_t idx_high = next_page * SSD1306_WIDTH + px;
                     buffer[idx_high] = (buffer[idx_high] & ~high_mask) | (high & high_mask);
                 }
             }
         }
 
-        uint8_t space_x = x0 + FONT_W;
+        int space_x = x0 + FONT_W;
         
         if (space_x >= 0 && space_x < SSD1306_WIDTH) {
-            uint8_t page = y0 >> 3; // y0 / 8
-            uint8_t bit_offset = y0 & 0x07;
             uint8_t glyph_mask = (1u << FONT_H) - 1u;
             uint8_t low_mask = glyph_mask << bit_offset;
+
+            int pages = SSD1306_HEIGHT >> 3;
             if (page >= 0 && page < (SSD1306_HEIGHT / 8)) {
                 uint8_t idx_low = page * SSD1306_WIDTH + space_x;
                 buffer[idx_low] &= ~low_mask;
@@ -239,7 +245,7 @@ void ssd1306_write_text(uint8_t textBuff[], uint8_t row, uint8_t column) {
                 uint8_t next_page = page + 1;
                 if (next_page >= 0 && next_page < (SSD1306_HEIGHT / 8)) {
                     uint8_t high_mask = glyph_mask >> (8 - bit_offset);
-                    uint8_t idx_high = next_page * SSD1306_WIDTH + space_x;
+                    size_t idx_high = next_page * SSD1306_WIDTH + space_x;
                     buffer[idx_high] &= ~high_mask;
                 }
             }
